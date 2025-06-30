@@ -11,7 +11,7 @@
     <PackageId>Optilizer</PackageId>
     <PackageVersion>1.0.0</PackageVersion>
     <Authors>Petrovicz</Authors>
-    <PackageLicenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/petrovicz/Optilizer/tree/master?tab=Apache-2.0-1-ov-file#readme</PackageLicenseUrl>
     <PackageProjectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</PackageProjectUrl>
     <PackageIconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</PackageIconUrl>
     <RepositoryUrl>https://github.com/petrovicz/Optilizer</RepositoryUrl>
