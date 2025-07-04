@@ -87,36 +87,25 @@ namespace Optilizer
             var andExpr = SyntaxFactory.BinaryExpression(SyntaxKind.LogicalAndExpression, checkExpr, containsCall)
                 .WithTriviaFrom(invocationExpr);
 
-            // Check if the invocation is negated (!list.Contains(x ?? 0))
-            var parent = invocationExpr.Parent;
+			// Check if the invocation is negated (e.g., !list.Contains(x ?? 0))
+			// or part of a binary expression (e.g., list.Contains(x ?? 0) || otherCondition)
+			// If so, we need to wrap the expression in parentheses to preserve the original logic
+			var parent = invocationExpr.Parent;
             bool isNegated = parent is PrefixUnaryExpressionSyntax prefix && prefix.IsKind(SyntaxKind.LogicalNotExpression);
-            ExpressionSyntax newExpr = andExpr;
-            if (isNegated)
-            {
-                // Replace !list.Contains(x ?? 0) with !(x.HasValue && list.Contains(x.Value))
-                var parenAndExpr = SyntaxFactory.ParenthesizedExpression(andExpr);
-                var negatedExpr = SyntaxFactory.PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, parenAndExpr)
-                    .WithTriviaFrom(parent);
+			bool isPartOfBinaryExpression = parent is BinaryExpressionSyntax binary;
+			bool needsParens = isNegated || isPartOfBinaryExpression;
 
-                newExpr = negatedExpr;
+			ExpressionSyntax newExpr = andExpr;
 
-                // Replace the parent (!invocationExpr) with newExpr
-                var root = await document.GetSyntaxRootAsync(cancellationToken);
-                var newRoot = root.ReplaceNode(parent, newExpr);
-                return document.WithSyntaxRoot(newRoot);
-            }
-            else
+            if (needsParens)
             {
-                bool needsParens = parent is BinaryExpressionSyntax;
-                if (needsParens)
-                {
-                    newExpr = SyntaxFactory.ParenthesizedExpression(andExpr).WithTriviaFrom(invocationExpr);
-                }
-                // Replace the invocation expression (list.Contains(x ?? 0)) with the new expression
-                var root = await document.GetSyntaxRootAsync(cancellationToken);
-                var newRoot = root.ReplaceNode(invocationExpr, newExpr);
-                return document.WithSyntaxRoot(newRoot);
+                newExpr = SyntaxFactory.ParenthesizedExpression(andExpr).WithTriviaFrom(invocationExpr);
             }
+
+            // Replace the invocation expression (list.Contains(x ?? 0)) with the new expression
+            var root = await document.GetSyntaxRootAsync(cancellationToken);
+            var newRoot = root.ReplaceNode(invocationExpr, newExpr);
+            return document.WithSyntaxRoot(newRoot);
         }
     }
 }
