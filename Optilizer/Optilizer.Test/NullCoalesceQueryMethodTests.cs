@@ -142,5 +142,38 @@ class C
             var expected1 = VerifyCS.Diagnostic("NC001").WithLocation(1);
             await VerifyCS.VerifyCodeFixAsync(test, new[] { expected0, expected1 }, fixedTest);
         }
+
+        [TestMethod]
+        public async Task CodeFixWorksWithReferenceType_Method()
+        {
+            var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<string> list, IQueryable<string> values)
+    {
+        var q = values.Where(x => list.Contains({|#0:x ?? ""default""|}));
+    }
+}";
+
+            var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<string> list, IQueryable<string> values)
+    {
+        var q = values.Where(x => x != null && list.Contains(x));
+    }
+}";
+
+            var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+            await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+        }
     }
 }

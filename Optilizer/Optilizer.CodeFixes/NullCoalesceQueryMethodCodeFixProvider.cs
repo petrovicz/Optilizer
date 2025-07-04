@@ -59,10 +59,32 @@ namespace Optilizer
                 return document;
             var listExpr = memberAccess.Expression.ToString();
 
-            // Build x.HasValue && list.Contains(x.Value)
-            var hasValueCheck = SyntaxFactory.ParseExpression($"{identifier}.HasValue");
-            var containsCall = SyntaxFactory.ParseExpression($"{listExpr}.Contains({identifier}.Value)");
-            var andExpr = SyntaxFactory.BinaryExpression(SyntaxKind.LogicalAndExpression, hasValueCheck, containsCall)
+            // Use semantic model to determine if left is value type or reference type
+            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
+            var leftSymbol = semanticModel.GetTypeInfo(left, cancellationToken).Type;
+            bool isNullable = leftSymbol != null && leftSymbol.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
+            bool isReference = leftSymbol != null && leftSymbol.IsReferenceType;
+
+            ExpressionSyntax checkExpr;
+            ExpressionSyntax valueExpr;
+            if (isNullable)
+            {
+                checkExpr = SyntaxFactory.ParseExpression($"{identifier}.HasValue");
+                valueExpr = SyntaxFactory.ParseExpression($"{identifier}.Value");
+            }
+            else if (isReference)
+            {
+                checkExpr = SyntaxFactory.ParseExpression($"{identifier} != null");
+                valueExpr = SyntaxFactory.ParseExpression($"{identifier}");
+            }
+            else
+            {
+                // fallback, keep original
+                return document;
+            }
+
+            var containsCall = SyntaxFactory.ParseExpression($"{listExpr}.Contains({valueExpr})");
+            var andExpr = SyntaxFactory.BinaryExpression(SyntaxKind.LogicalAndExpression, checkExpr, containsCall)
                 .WithTriviaFrom(invocationExpr);
 
             // Check if the invocation is part of any binary expression (e.g., &&, ||, etc.)
