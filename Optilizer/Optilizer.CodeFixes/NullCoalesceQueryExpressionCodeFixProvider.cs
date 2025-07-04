@@ -87,24 +87,47 @@ namespace Optilizer
             var andExpr = SyntaxFactory.BinaryExpression(SyntaxKind.LogicalAndExpression, checkExpr, containsCall)
                 .WithTriviaFrom(invocationExpr);
 
-            // Check if the invocation is part of any binary expression (e.g., &&, ||, etc.)
+            // Check if the invocation is negated (!list.Contains(x ?? 0))
             var parent = invocationExpr.Parent;
-            bool needsParens = parent is BinaryExpressionSyntax;
+            bool isNegated = parent is PrefixUnaryExpressionSyntax prefix && prefix.IsKind(SyntaxKind.LogicalNotExpression);
             ExpressionSyntax newExpr = andExpr;
-			if (needsParens)
-			{
-				// Remove trailing trivia from andExpr and attach it to the parenthesized expression
-				// Without this, the closing parenthesis would be moved to a new line in certain cases
+            if (isNegated)
+            {
+				// Replace !list.Contains(x ?? 0) with !(x.HasValue && list.Contains(x.Value))
 				var trailingTrivia = andExpr.GetTrailingTrivia();
 				var andExprNoTrailing = andExpr.WithoutTrailingTrivia();
-				newExpr = SyntaxFactory.ParenthesizedExpression(andExprNoTrailing)
+				var parenAndExpr = SyntaxFactory.ParenthesizedExpression(andExprNoTrailing)
 					.WithTrailingTrivia(trailingTrivia);
-			}
 
-            // Replace the invocation expression (list.Contains(x ?? 0)) with the new expression
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
-            var newRoot = root.ReplaceNode(invocationExpr, newExpr);
-            return document.WithSyntaxRoot(newRoot);
+                var negatedExpr = SyntaxFactory.PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, parenAndExpr)
+                    .WithTriviaFrom(parent);
+
+                bool needsParens = parent.Parent is BinaryExpressionSyntax;
+                newExpr = negatedExpr;
+
+                // Replace the parent (!invocationExpr) with newExpr
+                var root = await document.GetSyntaxRootAsync(cancellationToken);
+                var newRoot = root.ReplaceNode(parent, newExpr);
+                return document.WithSyntaxRoot(newRoot);
+            }
+            else
+            {
+                bool needsParens = parent is BinaryExpressionSyntax;
+                if (needsParens)
+                {
+					// Remove trailing trivia from andExpr and attach it to the parenthesized expression
+					// Without this, the closing parenthesis would be moved to a new line in certain cases
+					var trailingTrivia = andExpr.GetTrailingTrivia();
+					var andExprNoTrailing = andExpr.WithoutTrailingTrivia();
+					newExpr = SyntaxFactory.ParenthesizedExpression(andExprNoTrailing)
+						.WithTrailingTrivia(trailingTrivia);
+                }
+
+                // Replace the invocation expression (list.Contains(x ?? 0)) with the new expression
+                var root = await document.GetSyntaxRootAsync(cancellationToken);
+                var newRoot = root.ReplaceNode(invocationExpr, newExpr);
+                return document.WithSyntaxRoot(newRoot);
+            }
         }
     }
 }

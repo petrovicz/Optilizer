@@ -175,5 +175,104 @@ class C
             var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
             await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
         }
+
+        [TestMethod]
+        public async Task NegatedContains_CodeFixWorks()
+        {
+            var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x => !list.Contains({|#0:x ?? 0|}));
+    }
+}";
+
+            var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x => !(x.HasValue && list.Contains(x.Value)));
+    }
+}";
+
+            var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+            await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+        }
+
+		[TestMethod]
+		public async Task NegatedContainsWithOr_CodeFixWorks()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x => x == null || !list.Contains({|#0:x ?? 0|}));
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x => x == null || !(x.HasValue && list.Contains(x.Value)));
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+        public async Task NegatedContains_ReferenceType_CodeFixWorks()
+        {
+            var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<string> list, IQueryable<string> values)
+    {
+        var q = values.Where(x => !list.Contains({|#0:x ?? ""default""|}));
+    }
+}";
+
+            var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<string> list, IQueryable<string> values)
+    {
+        var q = values.Where(x => !(x != null && list.Contains(x)));
+    }
+}";
+
+            var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+            await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+        }
     }
 }

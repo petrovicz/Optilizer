@@ -307,5 +307,116 @@ class C
             var expected = VerifyCS.Diagnostic("NC002").WithLocation(0);
             await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
         }
+
+        [TestMethod]
+        public async Task NegatedContains_Query_CodeFixWorks()
+        {
+            var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = from x in values
+                where !list.Contains({|#0:x ?? 0|})
+                select x;
+    }
+}";
+
+            var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = from x in values
+                where !(x.HasValue && list.Contains(x.Value))
+                select x;
+    }
+}";
+
+            var expected = VerifyCS.Diagnostic("NC002").WithLocation(0);
+            await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+        }
+
+		[TestMethod]
+		public async Task NegatedContainsWithOr_Query_CodeFixWorks()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = from x in values
+                where x == null || !list.Contains({|#0:x ?? 0|})
+                select x;
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = from x in values
+                where x == null || !(x.HasValue && list.Contains(x.Value))
+                select x;
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC002").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+        public async Task NegatedContains_ReferenceType_Query_CodeFixWorks()
+        {
+            var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<string> list, IQueryable<string> values)
+    {
+        var q = from x in values
+                where !list.Contains({|#0:x ?? ""default""|})
+                select x;
+    }
+}";
+
+            var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<string> list, IQueryable<string> values)
+    {
+        var q = from x in values
+                where !(x != null && list.Contains(x))
+                select x;
+    }
+}";
+
+            var expected = VerifyCS.Diagnostic("NC002").WithLocation(0);
+            await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+        }
     }
 }
