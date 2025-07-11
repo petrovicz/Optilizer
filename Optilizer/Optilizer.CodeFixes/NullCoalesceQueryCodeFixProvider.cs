@@ -11,11 +11,14 @@ using System.Threading.Tasks;
 
 namespace Optilizer
 {
-    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(NullCoalesceQueryExpressionCodeFixProvider)), Shared]
-    public class NullCoalesceQueryExpressionCodeFixProvider : CodeFixProvider
+    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(NullCoalesceQueryCodeFixProvider)), Shared]
+    public class NullCoalesceQueryCodeFixProvider : CodeFixProvider
     {
         public sealed override ImmutableArray<string> FixableDiagnosticIds =>
-            ImmutableArray.Create(NullCoalesceQueryExpressionAnalyzer.DiagnosticId);
+            ImmutableArray.Create(
+                NullCoalesceQueryMethodAnalyzer.DiagnosticId, // NC001
+                NullCoalesceQueryExpressionAnalyzer.DiagnosticId // NC002
+            );
 
         public sealed override FixAllProvider GetFixAllProvider() =>
             WellKnownFixAllProviders.BatchFixer;
@@ -37,7 +40,7 @@ namespace Optilizer
                 CodeAction.Create(
                     title: "Refactor to HasValue and Value usage",
                     createChangedDocument: c => ApplyFixAsync(context.Document, invocation, c),
-                    equivalenceKey: "RefactorNullCoalescingQuery"),
+                    equivalenceKey: "RefactorNullCoalescing"),
                 diagnostic);
         }
 
@@ -87,28 +90,30 @@ namespace Optilizer
             var andExpr = SyntaxFactory.BinaryExpression(SyntaxKind.LogicalAndExpression, checkExpr, containsCall)
                 .WithTriviaFrom(invocationExpr);
 
-			// Check if the invocation is negated (e.g., !list.Contains(x ?? 0))
-			// or part of a binary expression (e.g., list.Contains(x ?? 0) || otherCondition)
-			// If so, we need to wrap the expression in parentheses to preserve the original logic
-			var parent = invocationExpr.Parent;
+            // Check if the invocation is negated (e.g., !list.Contains(x ?? 0))
+            // or part of a binary expression (e.g., list.Contains(x ?? 0) || otherCondition)
+            // If so, we need to wrap the expression in parentheses to preserve the original logic
+            var parent = invocationExpr.Parent;
             bool isNegated = parent is PrefixUnaryExpressionSyntax prefix && prefix.IsKind(SyntaxKind.LogicalNotExpression);
-			bool isPartOfBinaryExpression = parent is BinaryExpressionSyntax binary;
-			bool needsParens = isNegated || isPartOfBinaryExpression;
+            bool isPartOfBinaryExpression = parent is BinaryExpressionSyntax;
+            bool needsParens = isNegated || isPartOfBinaryExpression;
 
-			ExpressionSyntax newExpr = andExpr;
+            ExpressionSyntax newExpr = andExpr;
 
-            if (needsParens)
-            {
-				// Remove trailing trivia from andExpr and attach it to the parenthesized expression
-				// Without this, the closing parenthesis would be moved to a new line in certain cases
+			if (needsParens)
+			{
+				// Moving trivias outside the parentheses
+				var leadingTrivia = andExpr.GetLeadingTrivia();
 				var trailingTrivia = andExpr.GetTrailingTrivia();
-				var andExprNoTrailing = andExpr.WithoutTrailingTrivia();
-				newExpr = SyntaxFactory.ParenthesizedExpression(andExprNoTrailing)
-					.WithTrailingTrivia(trailingTrivia);
-            }
+				var andExprWithoutTrivia = andExpr.WithoutTrivia();
 
-            // Replace the invocation expression (list.Contains(x ?? 0)) with the new expression
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
+				newExpr = SyntaxFactory.ParenthesizedExpression(andExprWithoutTrivia)
+					.WithLeadingTrivia(leadingTrivia)
+					.WithTrailingTrivia(trailingTrivia);
+			}
+
+			// Replace the invocation expression (list.Contains(x ?? 0)) with the new expression
+			var root = await document.GetSyntaxRootAsync(cancellationToken);
             var newRoot = root.ReplaceNode(invocationExpr, newExpr);
             return document.WithSyntaxRoot(newRoot);
         }

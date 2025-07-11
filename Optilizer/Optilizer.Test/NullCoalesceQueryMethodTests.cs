@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = Optilizer.Test.CSharpCodeFixVerifier<
 	Optilizer.NullCoalesceQueryMethodAnalyzer,
-	Optilizer.NullCoalesceQueryMethodCodeFixProvider>;
+	Optilizer.NullCoalesceQueryCodeFixProvider>;
 
 namespace Optilizer.Test
 {
@@ -109,7 +109,311 @@ class C
             await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
         }
 
-        [TestMethod]
+		[TestMethod]
+		public async Task NewLineFormattingOr()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null ||
+            list.Contains({|#0:x ?? 0|})
+        );
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null ||
+            (x.HasValue && list.Contains(x.Value))
+        );
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+		public async Task NewLineFormattingOrWithComment()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null ||
+            list.Contains({|#0:x ?? 0|}) // This is a comment
+        );
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null ||
+            (x.HasValue && list.Contains(x.Value)) // This is a comment
+        );
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+		public async Task NewLineFormattingAnd()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null &&
+            list.Contains({|#0:x ?? 0|})
+        );
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null &&
+            (x.HasValue && list.Contains(x.Value))
+        );
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+		public async Task NewLineFormattingAndWithComment()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null &&
+            list.Contains({|#0:x ?? 0|}) // This is a comment
+        );
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null &&
+            (x.HasValue && list.Contains(x.Value)) // This is a comment
+        );
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+		public async Task EndOfLineFormattingOr()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null || list.Contains({|#0:x ?? 0|})
+        );
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null || (x.HasValue && list.Contains(x.Value))
+        );
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+		public async Task EndOfLineFormattingOrWithComment()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null || list.Contains({|#0:x ?? 0|}) // This is a comment
+        );
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null || (x.HasValue && list.Contains(x.Value)) // This is a comment
+        );
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+		public async Task EndOfLineFormattingAnd()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null && list.Contains({|#0:x ?? 0|})
+        );
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null && (x.HasValue && list.Contains(x.Value))
+        );
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+		public async Task EndOfLineFormattingAndWithComment()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null && list.Contains({|#0:x ?? 0|}) // This is a comment
+        );
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = values.Where(x =>
+            x == null && (x.HasValue && list.Contains(x.Value)) // This is a comment
+        );
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC001").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
         public async Task MultipleContainsAndOrOperator()
         {
             var test = @"

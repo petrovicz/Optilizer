@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = Optilizer.Test.CSharpCodeFixVerifier<
 	Optilizer.NullCoalesceQueryExpressionAnalyzer,
-	Optilizer.NullCoalesceQueryExpressionCodeFixProvider>;
+	Optilizer.NullCoalesceQueryCodeFixProvider>;
 
 namespace Optilizer.Test
 {
@@ -198,6 +198,84 @@ class C
 
 		[TestMethod]
 		public async Task ContainsNextToOrOperatorWithComment_Query()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = from x in values
+                where x == null || list.Contains({|#0:x ?? 0|}) // This is a comment
+                select x;
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = from x in values
+                where x == null || (x.HasValue && list.Contains(x.Value)) // This is a comment
+                select x;
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC002").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+		public async Task NewLineFormatting()
+		{
+			var test = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = from x in values
+                where
+                    x == null ||
+                    list.Contains({|#0:x ?? 0|})
+                select x;
+    }
+}";
+
+			var fixedTest = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M(List<int> list, IQueryable<int?> values)
+    {
+        var q = from x in values
+                where
+                    x == null ||
+                    (x.HasValue && list.Contains(x.Value))
+                select x;
+    }
+}";
+
+			var expected = VerifyCS.Diagnostic("NC002").WithLocation(0);
+			await VerifyCS.VerifyCodeFixAsync(test, expected, fixedTest);
+		}
+
+		[TestMethod]
+		public async Task NewLineFormattingWithComment()
 		{
 			var test = @"
 using System;
