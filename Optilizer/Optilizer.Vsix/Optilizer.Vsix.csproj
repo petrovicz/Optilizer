@@ -19,6 +19,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="..\Optilizer.Package\logo.png">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.8.3038" PrivateAssets="all" />
   </ItemGroup>
 
