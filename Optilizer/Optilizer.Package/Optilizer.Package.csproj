@@ -10,18 +10,18 @@
   <PropertyGroup>
     <PackageId>Optilizer</PackageId>
     <PackageVersion>1.0.0</PackageVersion>
-    <Authors>Petrovicz</Authors>
-    <PackageLicenseUrl>https://github.com/petrovicz/Optilizer/tree/master?tab=Apache-2.0-1-ov-file#readme</PackageLicenseUrl>
-    <PackageProjectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</PackageProjectUrl>
-    <PackageIconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</PackageIconUrl>
+    <Authors>petrovicz</Authors>
+    <PackageProjectUrl>https://github.com/petrovicz/Optilizer</PackageProjectUrl>
+    <PackageIcon>logo.png</PackageIcon>
     <RepositoryUrl>https://github.com/petrovicz/Optilizer</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Description>Optilizer</Description>
+    <Description>Roslyn analyzer to optimize your code</Description>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
-    <Copyright>Copyright</Copyright>
     <PackageTags>Roslyn, Analyzer, Refactoring, Productivity, CodeAnalysis, C#, CSharp, Optilizer, analyzers, optimize, LINQ</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoPackageAnalysis>true</NoPackageAnalysis>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToOutput</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>
@@ -33,6 +33,9 @@
 
   <ItemGroup>
     <None Update="tools\*.ps1" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\"/>
+    <None Include="logo.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
   <Target Name="_AddAnalyzersToOutput">
