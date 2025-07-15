@@ -15,7 +15,7 @@ namespace Optilizer
 		private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
 			DiagnosticId,
 			"Avoid ?? inside Contains within IQueryable.Where",
-			"Using ?? here causes Entity Framework to generate a COALESCE SQL command, which prevents optimal index usage and can severely impact query performance.",
+			"Using ?? here causes EF to generate a COALESCE SQL command, which prevents optimal index usage and can severely impact query performance.",
 			"Usage",
 			DiagnosticSeverity.Warning,
 			isEnabledByDefault: true);

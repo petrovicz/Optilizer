@@ -38,7 +38,7 @@ namespace Optilizer
 
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: "Refactor to always call Contains with fallback",
+                    title: "Refactor by keeping conditions",
                     createChangedDocument: c => ApplyFixAsync(context.Document, invocation, c),
                     equivalenceKey: "RefactorNullCoalescingAlwaysContains"),
                 diagnostic);
