@@ -9,21 +9,23 @@
 
   <PropertyGroup>
     <PackageId>Optilizer</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
+    <PackageVersion>1.0.1</PackageVersion>
     <Authors>petrovicz</Authors>
     <PackageProjectUrl>https://github.com/petrovicz/Optilizer</PackageProjectUrl>
     <PackageIcon>logo.png</PackageIcon>
     <RepositoryUrl>https://github.com/petrovicz/Optilizer</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>Roslyn analyzer to optimize your code</Description>
-    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
-    <PackageTags>Roslyn, Analyzer, Refactoring, Productivity, CodeAnalysis, C#, CSharp, Optilizer, analyzers, optimize, LINQ</PackageTags>
+    <PackageReleaseNotes>Setting a better title to the code fix that keeps conditions</PackageReleaseNotes>
+    <PackageTags>Roslyn, Analyzer, Refactoring, Productivity, CodeAnalysis, C#, CSharp, Optilizer, analyzers, optimize, LINQ, EF, entity, framework</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoPackageAnalysis>true</NoPackageAnalysis>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
 
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToOutput</TargetsForTfmSpecificContentInPackage>
+
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,9 +35,9 @@
 
   <ItemGroup>
     <None Update="tools\*.ps1" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="" />
-    <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
-    <None Include="..\..\LICENSE" Pack="true" PackagePath="\"/>
-    <None Include="logo.png" Pack="true" PackagePath="\"/>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <Target Name="_AddAnalyzersToOutput">
