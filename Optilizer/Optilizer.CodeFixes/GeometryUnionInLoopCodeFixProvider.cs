@@ -63,11 +63,14 @@ namespace Optilizer
             if (collectionVariable == null)
                 return document; // Can't determine pattern, no fix available
 
-            // Create the replacement code
-            var replacementStatement = CreateCascadedUnionReplacement(
-                loopStatement, 
-                collectionVariable, 
-                accumulatorVariable);
+            // Create the replacement code - simple assignment to the accumulator variable
+            var replacementCode = accumulatorVariable != null
+                ? $"{accumulatorVariable} = CascadedPolygonUnion.Union({collectionVariable});"
+                : $"var result = CascadedPolygonUnion.Union({collectionVariable});";
+
+            var replacementStatement = SyntaxFactory.ParseStatement(replacementCode)
+                .WithLeadingTrivia(loopStatement.GetLeadingTrivia())
+                .WithTrailingTrivia(loopStatement.GetTrailingTrivia());
 
             // Replace the loop with the new statement
             var newRoot = root.ReplaceNode(loopStatement, replacementStatement);
@@ -131,20 +134,7 @@ namespace Optilizer
             return (collectionVariable, accumulatorVariable);
         }
 
-        private StatementSyntax CreateCascadedUnionReplacement(
-            StatementSyntax originalLoop,
-            string collectionVariable,
-            string accumulatorVariable)
-        {
-            // Generate the replacement statement using CascadedPolygonUnion
-            var replacementCode = accumulatorVariable != null
-                ? $"{accumulatorVariable} = CascadedPolygonUnion.Union({collectionVariable});"
-                : $"var result = CascadedPolygonUnion.Union({collectionVariable});";
 
-            return SyntaxFactory.ParseStatement(replacementCode)
-                .WithLeadingTrivia(originalLoop.GetLeadingTrivia())
-                .WithTrailingTrivia(originalLoop.GetTrailingTrivia());
-        }
 
         private SyntaxNode AddUsingDirectiveIfNeeded(SyntaxNode root, string namespaceName)
         {
